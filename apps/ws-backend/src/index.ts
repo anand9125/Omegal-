@@ -1,13 +1,28 @@
-import { WebSocketServer } from 'ws';
+import { Socket } from "socket.io";
+import * as http from "http";
 
-const wss = new WebSocketServer({ port: 8080 });
+import { Server } from 'socket.io';
+import { UserManager } from "./RoomManage/UserManager";
 
-wss.on('connection', function connection(ws) {
-  ws.on('error', console.error);
+const server = http.createServer(http); ////creates an HTTP server using Node.js's http module
 
-  ws.on('message', function message(data) {
-    console.log('received: %s', data);
-  });
+const io = new Server(server, { //  //creates WebSocket server (io) attached to the server.
+  cors: {
+    origin: "*"
+  }
+});
 
-  ws.send('something');
+const userManager = new UserManager();
+
+io.on('connection', (socket: Socket) => {
+  console.log('a user connected');
+  userManager.addUser("randomName", socket);
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+    userManager.removeUser(socket.id);
+  })
+});
+
+server.listen(3000, () => {
+    console.log('listening on *:3000');
 });
